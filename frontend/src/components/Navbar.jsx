@@ -100,15 +100,7 @@ const Navbar = () => {
 
                     {/* Logo (Centered on Desktop) */}
                     <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none">
-                        <div className="text-center">
-                            {config?.site_logo ? (
-                                <img src={config.site_logo} alt={config.site_name} className="h-7 md:h-9 object-contain" />
-                            ) : (
-                                <h1 className={`text-lg md:text-xl font-serif font-bold tracking-tight ${scrolled ? 'text-coffee-dark' : 'text-white'}`}>
-                                    YEMENI<span className="text-gold">.MARKET</span>
-                                </h1>
-                            )}
-                        </div>
+                        <img src="/logo.png" alt="Yemeni Market" className="h-10 md:h-12 object-contain" />
                     </Link>
 
                     {/* Right Icons */}

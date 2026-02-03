@@ -82,10 +82,21 @@ app.get('/api/invoices/:id/pdf', authenticateToken, async (req, res) => {
 
         doc.rect(0, 0, 600, 150).fill(coffeeColor);
 
-        doc.fillColor(goldColor).fontSize(24).font('Helvetica-Bold').text('YEMENI', 50, 45, { continued: true });
-        doc.fillColor('#FFFFFF').text('.MARKET');
+        // Add Logo
+        try {
+            const logoPath = require('path').join(__dirname, 'logo.png');
+            if (require('fs').existsSync(logoPath)) {
+                doc.image(logoPath, 50, 40, { height: 60 });
+            } else {
+                doc.fillColor(goldColor).fontSize(24).font('Helvetica-Bold').text('YEMENI', 50, 45, { continued: true });
+                doc.fillColor('#FFFFFF').text('.MARKET');
+            }
+        } catch (e) {
+            doc.fillColor(goldColor).fontSize(24).font('Helvetica-Bold').text('YEMENI', 50, 45, { continued: true });
+            doc.fillColor('#FFFFFF').text('.MARKET');
+        }
 
-        doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica').text('AUTHENTICITY & HERITAGE', 50, 75);
+        doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica').text('AUTHENTICITY & HERITAGE', 150, 75);
 
         doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text('INVOICE', 450, 45, { align: 'right' });
         doc.fontSize(16).text(`#${invoice.invoice_number}`, 450, 65, { align: 'right' });
