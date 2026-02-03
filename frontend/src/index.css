@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 
+      Color Palette:
+      - Primary: Gold (#D4AF37) -> HSL 46 65% 52%
+      - Foreground (Text): Coffee (#4B3621) -> HSL 30 38% 21%
+      - Background: White / Cream
+    */
+    --background: 0 0% 100%;
+    --foreground: 30 38% 21%;
+    /* Coffee Dark */
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 38% 21%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 38% 21%;
+
+    --primary: 46 65% 52%;
+    /* Gold */
+    --primary-foreground: 30 38% 21%;
+    /* Coffee text on gold */
+
+    --secondary: 40 30% 96%;
+    /* Cream light */
+    --secondary-foreground: 30 38% 21%;
+
+    --muted: 40 30% 96%;
+    --muted-foreground: 30 20% 40%;
+
+    --accent: 46 65% 52%;
+    --accent-foreground: 255 255% 255%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 40 20% 92%;
+    --input: 40 20% 92%;
+    --ring: 46 65% 52%;
+
+    --radius: 0.3rem;
+  }
+
+  .dark {
+    --background: 30 38% 10%;
+    --foreground: 40 30% 96%;
+
+    --card: 30 38% 12%;
+    --card-foreground: 40 30% 96%;
+
+    --popover: 30 38% 12%;
+    --popover-foreground: 40 30% 96%;
+
+    --primary: 46 65% 52%;
+    --primary-foreground: 30 38% 21%;
+
+    --secondary: 30 38% 15%;
+    --secondary-foreground: 40 30% 96%;
+
+    --muted: 30 38% 15%;
+    --muted-foreground: 40 20% 70%;
+
+    --accent: 30 38% 15%;
+    --accent-foreground: 40 30% 96%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 40 30% 96%;
+
+    --border: 30 38% 20%;
+    --input: 30 38% 20%;
+    --ring: 46 65% 52%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: "Inter", "system-ui", "sans-serif";
+    /* Fallback to standard sans stack */
+  }
+}
