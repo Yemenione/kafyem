@@ -23,6 +23,7 @@ import Settings from './pages/admin/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsent from './components/CookieConsent';
 import './i18n';
+import { Toaster, toast } from 'sonner';
 
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -32,6 +33,19 @@ import { StoreConfigProvider } from './context/StoreConfigContext';
 function App() {
   return (
     <Router>
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          style: {
+            background: '#2C1E14',
+            color: '#D4AF37',
+            border: '1px solid #D4AF37',
+            fontFamily: "'Outfit', sans-serif"
+          },
+        }}
+      />
       <StoreConfigProvider>
         <AuthProvider>
           <WishlistProvider>

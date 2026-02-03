@@ -10,6 +10,7 @@ import { Input } from '../components/ui/input';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { ShieldCheck, Lock, CreditCard, MapPin } from 'lucide-react';
 
 const CheckoutForm = ({ clientSecret, onSuccess }) => {
@@ -119,7 +120,7 @@ const Checkout = () => {
                 cartTotal: costs.subtotal
             });
             setCoupon(res.data);
-            alert(t('coupon_applied'));
+            toast.success(t('coupon_applied'));
         } catch (err) {
             setCouponError(err.response?.data?.error || t('invalid_coupon'));
             setCoupon(null);
@@ -182,11 +183,11 @@ const Checkout = () => {
 
             // Success
             clearCart();
-            alert(t('order_success_msg', { email: contact.email }));
+            toast.success(t('order_success_msg', { email: contact.email }));
             navigate('/');
         } catch (error) {
             console.error("Failed to save order", error);
-            alert(t('payment_success_order_fail'));
+            toast.error(t('payment_success_order_fail'));
         }
     };
 
@@ -196,11 +197,11 @@ const Checkout = () => {
 
             <div className="max-w-7xl mx-auto px-4 py-12">
                 <div className="flex flex-col md:flex-row justify-center items-center mb-12 space-y-4 md:space-y-0 text-sm tracking-widest uppercase">
-                    <div className={`flex items-center gap-2 ${step >= 1 ? 'text-coffee-dark font-bold' : 'text-gray-400'}`}>
+                    <div className={`flex items - center gap - 2 ${step >= 1 ? 'text-coffee-dark font-bold' : 'text-gray-400'} `}>
                         <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center">1</span> {t('step_details')}
                     </div>
                     <div className="w-12 h-px bg-gray-300 mx-4"></div>
-                    <div className={`flex items-center gap-2 ${step >= 2 ? 'text-coffee-dark font-bold' : 'text-gray-400'}`}>
+                    <div className={`flex items - center gap - 2 ${step >= 2 ? 'text-coffee-dark font-bold' : 'text-gray-400'} `}>
                         <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center">2</span> {t('step_payment')}
                     </div>
                 </div>

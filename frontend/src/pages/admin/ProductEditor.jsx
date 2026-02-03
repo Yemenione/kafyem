@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Plus, Edit2, Trash2, ArrowLeft, Save, ShoppingBag, Layers, Image as ImageIcon, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,7 @@ const ProductEditor = () => {
                     });
                 } catch (error) {
                     console.error("Error fetching product", error);
-                    alert("Failed to load product data");
+                    toast.error("Failed to load product data");
                 } finally {
                     setFetching(false);
                 }
@@ -65,11 +66,11 @@ const ProductEditor = () => {
             await axios[method](url, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert(isEdit ? 'Product Updated Successfully!' : 'Product Created Successfully!');
+            toast.success(isEdit ? 'Product Updated Successfully!' : 'Product Created Successfully!');
             navigate('/admin/products');
         } catch (error) {
             console.error(error);
-            alert(`Failed to ${isEdit ? 'update' : 'create'} product`);
+            toast.error(`Failed to ${isEdit ? 'update' : 'create'} product`);
         } finally {
             setLoading(false);
         }

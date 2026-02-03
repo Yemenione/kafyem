@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { Eye } from 'lucide-react';
 
 const AdminOrders = () => {
@@ -34,10 +35,10 @@ const AdminOrders = () => {
                 { status: newStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            alert(`Order status updated to ${newStatus}`);
+            toast.success(`Order status updated to ${newStatus}`);
         } catch (err) {
             console.error(err);
-            alert("Failed to update status");
+            toast.error("Failed to update status");
             // Revert on error (could fetch orders again)
         }
     };

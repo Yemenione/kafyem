@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Package, User, MapPin, LogOut, Settings as SettingsIcon, CreditCard, Heart, ShoppingBag, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -85,11 +86,11 @@ const Profile = () => {
                 setShowAddressForm(false);
                 setNewAddress({ label: '', street_address: '', city: '', postal_code: '', country: 'France', phone: '' });
             } else {
-                alert(t('failed_save_address'));
+                toast.error(t('failed_save_address'));
             }
         } catch (error) {
             console.error(error);
-            alert(t('error_save_address'));
+            toast.error(t('error_save_address'));
         }
     };
 
@@ -125,7 +126,7 @@ const Profile = () => {
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error("PDF Error:", error);
-            alert("Failed to download invoice");
+            toast.error("Failed to download invoice");
         }
     };
 

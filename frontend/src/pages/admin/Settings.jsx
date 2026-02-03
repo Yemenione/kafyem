@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Save, Lock, Globe, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { Save, Shield, ShieldOff, Mail, CreditCard, ExternalLink, RefreshCw } from 'lucide-react';
 
 const Settings = () => {
     const [configs, setConfigs] = useState([]);
@@ -37,8 +38,9 @@ const Settings = () => {
             );
             // Update local state
             setConfigs(prev => prev.map(c => c.key === key ? { ...c, value, isPublic } : c));
+            toast.success(`Setting '${key}' saved successfully`);
         } catch (error) {
-            alert("Failed to save setting");
+            toast.error("Failed to save setting");
         } finally {
             setSaving(null);
         }

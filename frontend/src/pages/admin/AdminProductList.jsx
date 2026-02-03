@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 const AdminProductList = () => {
     const [products, setProducts] = useState([]);
@@ -37,8 +38,9 @@ const AdminProductList = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchProducts();
+            toast.success("Product deactivated successfully");
         } catch (error) {
-            alert("Failed to delete product");
+            toast.error("Failed to delete product");
         }
     };
 

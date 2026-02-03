@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { Star, Check, ArrowLeft, Truck, ShieldCheck, RefreshCw, Minus, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -38,7 +39,7 @@ const ProductDetails = () => {
     }, [id]);
 
     const handleReviewSubmit = async () => {
-        if (!newReview.comment) return alert(t('please_add_comment'));
+        if (!newReview.comment) return toast.error(t('please_add_comment'));
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
@@ -46,13 +47,13 @@ const ProductDetails = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNewReview({ rating: 5, comment: '' });
-            alert(t('review_submitted'));
+            toast.success(t('review_submitted'));
             // Refresh reviews
             const response = await axios.get(`http://localhost:5000/api/products/${id}/reviews`);
             setReviews(response.data);
         } catch (err) {
             console.error("Error submitting review", err);
-            alert(t('failed_submit'));
+            toast.error(t('failed_submit'));
         } finally {
             setSubmitting(false);
         }

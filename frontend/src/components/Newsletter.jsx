@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Newsletter = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [email, setEmail] = useState('');
     const [consent, setConsent] = useState(false);
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
@@ -13,7 +14,7 @@ const Newsletter = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!consent) {
-            alert(t('accept_privacy_alert'));
+            toast.warning(t('accept_privacy_alert'));
             return;
         }
 
