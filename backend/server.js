@@ -697,18 +697,18 @@ const nodemailer = require('nodemailer');
 // Helper to send email
 const sendEmail = async (to, subject, html) => {
     try {
-        let transportConfig = {};
+        // Prioritize Database Config, then Env, then Hardcoded Defaults
+        const smtpHost = config.smtp_host || process.env.SMTP_HOST || 'smtp.hostinger.com';
+        const smtpPort = Number(config.smtp_port) || Number(process.env.SMTP_PORT) || 465;
+        const smtpUser = config.smtp_user || process.env.SMTP_USER || 'sell@yemenimarket.fr';
+        const smtpPass = config.smtp_pass || process.env.SMTP_PASS || 'Admin1236@1';
+        const fromEmail = config.smtp_from_email || smtpUser;
+        const fromName = config.smtp_from_name || 'Yemeni Market';
 
-        // Use provided env vars or fallback to hardcoded (if user asked, but better to use env)
-        const smtpHost = process.env.SMTP_HOST || 'smtp.hostinger.com';
-        const smtpPort = Number(process.env.SMTP_PORT) || 465;
-        const smtpUser = process.env.SMTP_USER || 'sell@yemenimarket.fr';
-        const smtpPass = process.env.SMTP_PASS || 'Admin1236@1';
+        // Port 465 is usually SSL (secure: true), 587 is TLS (secure: false)
+        const isSecure = smtpPort === 465 || config.smtp_secure === 'true' || process.env.SMTP_SECURE === 'true';
 
-        // Hostinger SSL (465) needs secure: true
-        const isSecure = smtpPort === 465 || process.env.SMTP_SECURE === 'true';
-
-        transportConfig = {
+        const transportConfig = {
             host: smtpHost,
             port: smtpPort,
             secure: isSecure,
@@ -718,20 +718,20 @@ const sendEmail = async (to, subject, html) => {
             },
         };
 
-        console.log(`[Email] Sending to ${to} via ${smtpHost}:${smtpPort} (Secure: ${isSecure})`);
+        console.log(`[Email Settings] Using: ${smtpHost}:${smtpPort} (User: ${smtpUser})`);
 
-        let transporter = nodemailer.createTransport(transportConfig);
+        const transporter = nodemailer.createTransport(transportConfig);
 
-        let info = await transporter.sendMail({
-            from: `"Yemeni Market" <${smtpUser}>`,
+        const info = await transporter.sendMail({
+            from: `"${fromName}" <${fromEmail}>`,
             to: to,
             subject: subject,
             html: html,
         });
 
-        console.log("Message sent: %s", info.messageId);
+        console.log("[Email] Message sent: %s", info.messageId);
     } catch (error) {
-        console.error("Error sending email:", error);
+        console.error("[Email Error]", error);
     }
 };
 
@@ -741,14 +741,15 @@ app.post('/api/create-payment-intent', async (req, res) => {
         const { items } = req.body;
 
         // Mock mode if Stripe key is not configured or is a placeholder
-        if (!config.stripe_secret_key || config.stripe_secret_key === 'sk_test_placeholder') {
+        const secretKey = config.stripe_secret_key || '';
+        if (!secretKey || secretKey.toLowerCase().includes('placeholder')) {
             return res.send({
                 clientSecret: 'mock_secret_' + Date.now(),
                 mock: true
             });
         }
 
-        const stripe = require('stripe')(config.stripe_secret_key);
+        const stripe = require('stripe')(secretKey);
 
         // Calculate Subtotal
         let subtotal = 0;
