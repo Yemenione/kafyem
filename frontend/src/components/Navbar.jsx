@@ -100,7 +100,7 @@ const Navbar = () => {
 
                     {/* Logo (Centered on Desktop) */}
                     <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none">
-                        <img src="/logo.png" alt="Yemeni Market" className="h-10 md:h-12 object-contain" />
+                        <img src="/logo.png" alt="Yemeni Market" className="h-10 md:h-12 object-cover rounded-full aspect-square" />
                     </Link>
 
                     {/* Right Icons */}

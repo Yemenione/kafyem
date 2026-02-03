@@ -19,7 +19,7 @@ const AdminProductList = () => {
     const fetchProducts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5000/api/admin/products', {
+            const response = await axios.get(`${API_URL}/api/admin/products`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProducts(response.data);
@@ -34,7 +34,7 @@ const AdminProductList = () => {
         if (!window.confirm("Are you sure you want to deactivate this product?")) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/admin/products/${id}`, {
+            await axios.delete(`${API_URL}/api/admin/products/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchProducts();

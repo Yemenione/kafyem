@@ -10,9 +10,10 @@ const AdminOrders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                 const token = localStorage.getItem('token');
 
-                const response = await axios.get('http://localhost:5000/api/admin/orders', {
+                const response = await axios.get(`${API_URL}/api/admin/orders`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setOrders(response.data);
@@ -31,7 +32,8 @@ const AdminOrders = () => {
             // Optimistic update
             setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
 
-            await axios.put(`http://localhost:5000/api/admin/orders/${orderId}/status`,
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            await axios.put(`${API_URL}/api/admin/orders/${orderId}/status`,
                 { status: newStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

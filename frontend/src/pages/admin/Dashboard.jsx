@@ -34,12 +34,31 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                 const token = localStorage.getItem('token');
+                const config = { headers: { Authorization: `Bearer ${token}` } };
 
-                const response = await axios.get('http://localhost:5000/api/admin/stats', {
-                    headers: { Authorization: `Bearer ${token}` }
+                const [ordersRes, productsRes, customersRes] = await Promise.all([
+                    axios.get(`${API_URL}/api/admin/orders`, config),
+                    axios.get(`${API_URL}/api/products`),
+                    axios.get(`${API_URL}/api/admin/customers`, config)
+                ]);
+
+                // Calculate stats from the fetched data
+                const totalOrders = ordersRes.data.length;
+                const pendingOrders = ordersRes.data.filter(order => order.status === 'pending').length;
+                const totalRevenue = ordersRes.data.reduce((acc, order) => acc + order.totalPrice, 0);
+                const totalProducts = productsRes.data.length;
+                const totalCustomers = customersRes.data.length;
+
+                setStats({
+                    totalRevenue,
+                    totalOrders,
+                    pendingOrders,
+                    totalProducts,
+                    totalCustomers
                 });
-                setStats(response.data);
+
             } catch (err) {
                 console.error(err);
                 // Fallback for demo if not logged in as admin

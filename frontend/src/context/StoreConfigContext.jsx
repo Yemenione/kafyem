@@ -18,7 +18,8 @@ export const StoreConfigProvider = ({ children }) => {
     useEffect(() => {
         const fetchConfig = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/config');
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const response = await axios.get(`${API_URL}/api/config`);
                 setConfig({ ...response.data, loading: false });
             } catch (error) {
                 console.error("Failed to load store config:", error);

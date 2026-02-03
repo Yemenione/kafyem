@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Send } from 'lucide-react';
@@ -20,23 +21,21 @@ const Newsletter = () => {
 
         setStatus('loading');
         try {
-            const response = await fetch('http://localhost:5000/api/newsletter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email,
-                    gdpr_consent: consent,
-                    lang: i18n.language
-                })
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await axios.post(`${API_URL}/api/newsletter/subscribe`, {
+                email,
+                gdpr_consent: consent,
+                lang: i18n.language
             });
 
-            if (response.ok) {
+            if (response.status === 200) {
                 setStatus('success');
                 setEmail('');
             } else {
                 setStatus('error');
             }
         } catch (error) {
+            console.error(error);
             setStatus('error');
         }
     };

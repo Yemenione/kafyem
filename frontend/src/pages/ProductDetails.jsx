@@ -26,10 +26,12 @@ const ProductDetails = () => {
     const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
     const [submitting, setSubmitting] = useState(false);
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     useEffect(() => {
         const fetchReviews = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/products/${id}/reviews`);
+                const response = await axios.get(`${API_URL}/api/products/${id}/reviews`);
                 setReviews(response.data);
             } catch (err) {
                 console.error("Error fetching reviews", err);

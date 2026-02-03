@@ -115,7 +115,8 @@ const Checkout = () => {
     const handleApplyCoupon = async () => {
         setCouponError('');
         try {
-            const res = await axios.post('http://localhost:5000/api/coupons/validate', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const res = await axios.post(`${API_URL}/api/coupons/validate`, {
                 code: couponCode,
                 cartTotal: costs.subtotal
             });
@@ -134,7 +135,8 @@ const Checkout = () => {
     useEffect(() => {
         // Create PaymentIntent when moving to Payment step
         if (step === 2 && !clientSecret) {
-            axios.post('http://localhost:5000/api/create-payment-intent', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            axios.post(`${API_URL}/api/create-payment-intent`, {
                 items: cartItems,
                 // Backend will re-calculate, but we pass context if needed. 
                 // Ideally backend ignores frontend prices and uses DB, but for tax/shipping logic we assume backend implementation matches.

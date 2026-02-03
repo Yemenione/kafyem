@@ -122,13 +122,10 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                let API_URL = 'http://localhost:5000/api/products';
+                let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                API_URL += '/api/products';
                 const queryParts = [];
 
-                const search = searchParams.get('search');
-                if (search) queryParts.push(`search=${encodeURIComponent(search)}`);
-
-                // Use selectedCategory state which is synced with URL or clicks
                 if (selectedCategory && selectedCategory !== 'All') {
                     queryParts.push(`category=${encodeURIComponent(selectedCategory)}`);
                 }

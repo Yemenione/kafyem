@@ -14,7 +14,13 @@ app.use(express.json());
 
 // Serve Static Frontend Files
 const path = require('path');
-app.use(express.static(path.join(__dirname, '../dist')));
+// Production: serve from 'public' folder inside backend
+// Development: serve from '../frontend/dist' if available
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// SPA Catch-all route (Must be after API routes)
+// We'll place this at the end of the file, before app.listen
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -748,16 +754,28 @@ const nodemailer = require('nodemailer');
 // Helper to send email
 const sendEmail = async (to, subject, html) => {
     try {
-        // Prioritize Database Config, then Env, then Hardcoded Defaults
-        const smtpHost = config.smtp_host || process.env.SMTP_HOST || 'smtp.hostinger.com';
-        const smtpPort = Number(config.smtp_port) || Number(process.env.SMTP_PORT) || 465;
-        const smtpUser = config.smtp_user || process.env.SMTP_USER || 'sell@yemenimarket.fr';
-        const smtpPass = config.smtp_pass || process.env.SMTP_PASS || 'Admin1236@1';
-        const fromEmail = config.smtp_from_email || smtpUser;
-        const fromName = config.smtp_from_name || 'Yemeni Market';
+        // Prioritize Environment Variables (User Request), then Database Config, then Defaults
+        const smtpHost = process.env.SMTP_HOST || config.smtp_host || 'smtp.hostinger.com';
+        const smtpPort = Number(process.env.SMTP_PORT) || Number(config.smtp_port) || 465;
+        const smtpUser = process.env.SMTP_USER || config.smtp_user || 'sell@yemenimarket.fr';
+        const smtpPass = process.env.SMTP_PASS || config.smtp_pass || 'Admin1236@1';
 
-        // Port 465 is usually SSL (secure: true), 587 is TLS (secure: false)
-        const isSecure = smtpPort === 465 || config.smtp_secure === 'true' || process.env.SMTP_SECURE === 'true';
+        // Hostinger (and many providers) require FROM email to match the authenticated user.
+        // We force this to avoid "Sender address rejected" errors.
+        const fromEmail = smtpUser;
+        const fromName = process.env.SMTP_FROM_NAME || config.smtp_from_name || 'Yemeni Market';
+
+        // Secure Logic: 
+        // If port 465 -> default secure. 
+        // If env/config explicitly says 'true' -> secure.
+        // If env/config explicitly says 'false' -> not secure.
+        let isSecure = smtpPort === 465; // Default based on port
+
+        const envSecure = process.env.SMTP_SECURE;
+        const configSecure = config.smtp_secure;
+
+        if (envSecure !== undefined) isSecure = envSecure === 'true';
+        else if (configSecure !== undefined) isSecure = configSecure === 'true';
 
         const transportConfig = {
             host: smtpHost,
@@ -1285,6 +1303,22 @@ app.post('/api/newsletter', async (req, res) => {
     } catch (error) {
         console.error("Newsletter Error:", error);
         res.status(500).json({ error: "Failed to subscribe" });
+    }
+});
+
+// Handle SPA Client-side routing (Must be last route)
+app.get('*', (req, res) => {
+    // Check 'public' first, then dev path
+    const prodIndex = path.join(__dirname, 'public', 'index.html');
+    if (require('fs').existsSync(prodIndex)) {
+        res.sendFile(prodIndex);
+    } else {
+        const devIndex = path.join(__dirname, '../frontend/dist', 'index.html');
+        if (require('fs').existsSync(devIndex)) {
+            res.sendFile(devIndex);
+        } else {
+            res.status(404).send("Frontend not built. Run 'npm run build' in frontend directory.");
+        }
     }
 });
 

@@ -16,8 +16,9 @@ const Settings = () => {
 
     const fetchConfigs = async () => {
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/admin/config', {
+            const res = await axios.get(`${API_URL}/api/admin/config`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setConfigs(res.data);

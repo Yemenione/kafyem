@@ -26,7 +26,8 @@ const ProductEditor = () => {
         if (isEdit) {
             const fetchProduct = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                    const response = await axios.get(`${API_URL}/api/products/${id}`);
                     const p = response.data;
                     setFormData({
                         name: p.name,
@@ -57,15 +58,15 @@ const ProductEditor = () => {
         e.preventDefault();
         setLoading(true);
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const url = isEdit
-                ? `http://localhost:5000/api/admin/products/${id}`
-                : 'http://localhost:5000/api/admin/products';
-            const method = isEdit ? 'put' : 'post';
+            const headers = { Authorization: `Bearer ${token}` };
 
-            await axios[method](url, formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            if (isEdit) {
+                await axios.put(`${API_URL}/api/admin/products/${id}`, formData, { headers });
+            } else {
+                await axios.post(`${API_URL}/api/admin/products`, formData, { headers });
+            }
             toast.success(isEdit ? 'Product Updated Successfully!' : 'Product Created Successfully!');
             navigate('/admin/products');
         } catch (error) {

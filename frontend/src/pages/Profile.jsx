@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Package, User, MapPin, LogOut, Settings as SettingsIcon, CreditCard, Heart, ShoppingBag, X } from 'lucide-react';
@@ -31,63 +32,56 @@ const Profile = () => {
     }, [searchParams]);
 
     useEffect(() => {
-        if (user && user.id) {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+        const fetchProfileData = async () => {
+            if (!user || !user.id) return;
 
-            const fetchOrders = async () => {
-                try {
-                    const response = await fetch(`http://localhost:5000/api/orders`, { headers });
-                    if (response.ok) {
-                        const data = await response.json();
-                        const mappedOrders = data.map(order => ({
-                            id: order.order_number,
-                            date: new Date(order.created_at).toLocaleDateString(),
-                            total: Number(order.total_amount),
-                            status: order.status,
-                            items: order.order_items.map(i => i.product_id)
-                        }));
-                        setOrders(mappedOrders);
-                    }
-                } catch (error) { console.error(error); }
-            };
-            const fetchAddresses = async () => {
-                try {
-                    const response = await fetch(`http://localhost:5000/api/customer/address`, { headers });
-                    if (response.ok) setAddresses(await response.json());
-                } catch (error) { console.error(error); }
-            };
-            const fetchInvoices = async () => {
-                try {
-                    const response = await fetch(`http://localhost:5000/api/customer/invoices`, { headers });
-                    if (response.ok) setInvoices(await response.json());
-                } catch (error) { console.error(error); }
-            };
+            try {
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const token = localStorage.getItem('token');
+                const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            fetchOrders();
-            fetchAddresses();
-            fetchInvoices();
-        }
-    }, [user, showAddressForm]);
+                const [ordersRes, addressRes, invoicesRes] = await Promise.all([
+                    axios.get(`${API_URL}/api/orders`, config),
+                    axios.get(`${API_URL}/api/customer/address`, config),
+                    axios.get(`${API_URL}/api/customer/invoices`, config)
+                ]);
+
+                const mappedOrders = ordersRes.data.map(order => ({
+                    id: order.order_number,
+                    date: new Date(order.created_at).toLocaleDateString(),
+                    total: Number(order.total_amount),
+                    status: order.status,
+                    items: order.order_items.map(i => i.product_id)
+                }));
+                setOrders(mappedOrders);
+                setAddresses(addressRes.data);
+                setInvoices(invoicesRes.data);
+
+            } catch (error) {
+                console.error("Failed to fetch profile data:", error);
+                toast.error(t('failed_fetch_profile_data'));
+            }
+        };
+
+        fetchProfileData();
+    }, [user, showAddressForm, t]); // Added t to dependencies
 
     const handleAddAddress = async (e) => {
         e.preventDefault();
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/customer/address', {
-                method: 'POST',
+            await axios.post(`${API_URL}/api/customer/address`, newAddress, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newAddress)
+                }
             });
-            if (res.ok) {
-                setShowAddressForm(false);
-                setNewAddress({ label: '', street_address: '', city: '', postal_code: '', country: 'France', phone: '' });
-            } else {
-                toast.error(t('failed_save_address'));
-            }
+            setShowAddressForm(false);
+            setNewAddress({ label: '', street_address: '', city: '', postal_code: '', country: 'France', phone: '' });
+            toast.success(t('address_saved_successfully'));
+            // Re-fetch addresses to update the list
+            // This will be handled by the useEffect dependency on showAddressForm
         } catch (error) {
             console.error(error);
             toast.error(t('error_save_address'));
@@ -110,8 +104,9 @@ const Profile = () => {
 
     const downloadInvoice = async (invoice) => {
         try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5000/api/invoices/${invoice.id}/pdf`, {
+            const response = await fetch(`${API_URL}/api/invoices/${invoice.id}/pdf`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Download failed');
