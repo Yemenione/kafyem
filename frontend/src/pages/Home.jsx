@@ -1,53 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ProductGrid from '../components/ProductGrid';
-import { useTranslation } from 'react-i18next';
-import { ArrowRight, Star, ShieldCheck, Truck, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
+import Hero3D from '../components/Three/Hero3D'; // Import 3D Hero
 
 const Home = () => {
-    const { t } = useTranslation();
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900">
             <Navbar />
 
-            {/* 1. HERO SECTION - Cinematic & Full Height */}
-            <div className="relative h-[90vh] w-full bg-black overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="https://placehold.co/1920x1080/1a1a1a/c5a059?text=Yemeni+Landscape+Cinematic"
-                        alt="Yemen Landscape"
-                        className="w-full h-full object-cover opacity-70"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                </div>
-
-                <div className="relative z-10 text-center max-w-4xl px-4 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                    <p className="text-gold uppercase tracking-[0.3em] text-xs md:text-sm font-bold mb-6">
-                        Est. 1999 • Sana'a, Yemen
-                    </p>
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium text-white mb-8 leading-tight">
-                        Timeless <span className="italic font-light">Heritage</span>
-                    </h1>
-                    <p className="text-lg md:text-xl text-gray-200 font-light mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Discover the world's finest Sidr Honey and authentic Haraz Coffee. Sourced directly from the mountains of Yemen.
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-6 justify-center">
-                        <Link to="/products?category=honey">
-                            <Button size="lg" className="bg-gold text-coffee-dark hover:bg-white hover:text-coffee-dark px-10 py-6 text-sm uppercase tracking-widest font-bold w-full md:w-auto">
-                                Shop Honey
-                            </Button>
-                        </Link>
-                        <Link to="/products?category=coffee">
-                            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black px-10 py-6 text-sm uppercase tracking-widest font-bold w-full md:w-auto">
-                                Shop Coffee
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </div>
+            {/* Cinematic Hero Section */}
+            <Hero3D />
 
             {/* 2. CATEGORY MOSAIC */}
             <section className="py-24 bg-white">

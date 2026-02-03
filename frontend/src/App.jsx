@@ -8,7 +8,16 @@ import Register from './pages/Register';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import AdminLayout from './layout/AdminLayout';
-import AdminDashboard from './pages/admin/Dashboard';
+import ProductEditor from './pages/admin/ProductEditor';
+
+// ... imports
+
+/* Inside Routes */
+<Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+  <Route index element={<AdminDashboard />} />
+  <Route path="products" element={<ProductEditor />} /> {/* For now using Editor as main list/add for simplicity */}
+  <Route path="orders" element={<AdminOrders />} />
+</Route>
 import AdminOrders from './pages/admin/Orders';
 import './i18n';
 

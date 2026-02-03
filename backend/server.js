@@ -293,6 +293,84 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
+// --- ADMIN ROUTES ---
+const checkAdmin = (req, res, next) => {
+    // In real app, check role: if (req.user.role !== 'admin') return res.sendStatus(403);
+    authenticateToken(req, res, next);
+};
+
+// Admin Stats
+app.get('/api/admin/stats', checkAdmin, async (req, res) => {
+    try {
+        const totalRevenue = await prisma.orders.aggregate({
+            _sum: { total_amount: true }
+        });
+        const totalOrders = await prisma.orders.count();
+        const pendingOrders = await prisma.orders.count({ where: { status: 'Processing' } });
+        const totalProducts = await prisma.products.count();
+
+        res.json({
+            totalRevenue: totalRevenue._sum.total_amount || 0,
+            totalOrders,
+            pendingOrders,
+            totalProducts
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// Admin: Get Orders
+app.get('/api/admin/orders', checkAdmin, async (req, res) => {
+    try {
+        const orders = await prisma.orders.findMany({
+            include: { customers: true },
+            orderBy: { created_at: 'desc' }
+        });
+
+        // Map to flat structure for table if needed, or just return
+        const formatted = orders.map(o => ({
+            ...o,
+            first_name: o.customers?.first_name || 'Guest',
+            last_name: o.customers?.last_name || '',
+            total_amount: parseFloat(o.total_amount)
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
+});
+
+// Admin: Create Product
+app.post('/api/admin/products', checkAdmin, async (req, res) => {
+    const { name, description, price, category_name, stock } = req.body;
+    try {
+        let category = await prisma.category.findFirst({ where: { name: category_name } });
+        if (!category && category_name) {
+            category = await prisma.category.create({ data: { name: category_name, slug: category_name.toLowerCase().replace(/\s+/g, '-') } });
+        }
+
+        const product = await prisma.products.create({
+            data: {
+                name,
+                description,
+                price: parseFloat(price),
+                stock_quantity: parseInt(stock) || 0,
+                slug: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+                category_id: category ? category.id : null,
+                is_active: true
+            }
+        });
+        res.json(product);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create product' });
+    }
+});
+
 loadConfig().then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
