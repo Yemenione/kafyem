@@ -1,6 +1,7 @@
 # Environment Files
 backend/.env
 frontend/.env
+backend_deploy/.env
 .env
 .env.local
 .env.production
