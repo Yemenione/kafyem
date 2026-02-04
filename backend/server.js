@@ -1339,7 +1339,7 @@ app.get(/(.*)/, (req, res) => {
     if (require('fs').existsSync(prodIndex)) {
         res.sendFile(prodIndex);
     } else {
-        const devIndex = path.join(__dirname, '../frontend/dist', 'index.html');
+        const devIndex = path.join(__dirname, '../dist', 'index.html');
         if (require('fs').existsSync(devIndex)) {
             res.sendFile(devIndex);
         } else {
