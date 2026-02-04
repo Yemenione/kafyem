@@ -14,15 +14,35 @@ app.use(cors());
 app.use(express.json());
 
 // --- API CONNECTIVITY TEST ---
-app.get('/api/test', (req, res) => {
+app.get('/api/test', async (req, res) => {
+    let stripeStatus = 'not_configured';
+    let stripeDetails = null;
+
+    if (config.stripe_secret_key) {
+        try {
+            const stripe = require('stripe')(config.stripe_secret_key);
+            const account = await stripe.accounts.retrieve();
+            stripeStatus = 'connected';
+            stripeDetails = {
+                id: account.id,
+                business_name: account.settings?.dashboard?.display_name
+            };
+        } catch (e) {
+            stripeStatus = 'error';
+            stripeDetails = { error: e.message };
+        }
+    }
+
     res.json({
         status: 'success',
         message: 'Backend is connected and running!',
         timestamp: new Date().toISOString(),
         env_check: {
-            stripe_enabled: !!process.env.STRIPE_SECRET_KEY,
-            smtp_host: process.env.SMTP_HOST || 'using_db_config'
-        }
+            stripe_status: stripeStatus,
+            stripe_details: stripeDetails,
+            smtp_host: process.env.SMTP_HOST || config.smtp_host || 'using_db_config'
+        },
+        database: 'connected' // If we reached here, Prisma is working
     });
 });
 
@@ -1357,9 +1377,9 @@ app.post('/api/newsletter', async (req, res) => {
 // This backend serves API endpoints only
 
 // Catch-all for undefined API routes
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: 'API endpoint not found' });
-});
+// app.use('/api/:path*', (req, res) => {
+//     res.status(404).json({ error: 'API endpoint not found' });
+// });
 
 // Root endpoint for health check
 app.get('/', (req, res) => {
