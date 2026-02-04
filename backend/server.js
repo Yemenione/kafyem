@@ -26,6 +26,34 @@ app.get('/api/test', (req, res) => {
     });
 });
 
+// --- STORE CONFIGURATION ENDPOINT ---
+app.get('/api/config', async (req, res) => {
+    try {
+        // Try to get config from database first
+        const dbConfig = await prisma.store_config.findMany();
+        const configMap = {};
+        dbConfig.forEach(item => {
+            configMap[item.key] = item.value;
+        });
+
+        // Return configuration with fallbacks to environment variables
+        res.json({
+            site_name: configMap.site_name || 'Yemeni Market',
+            site_logo: configMap.site_logo || '',
+            stripe_public_key: configMap.stripe_public_key || process.env.STRIPE_PUBLIC_KEY || '',
+            // Add other public config as needed
+        });
+    } catch (error) {
+        console.error('Error fetching store config:', error);
+        // Fallback to environment variables if database fails
+        res.json({
+            site_name: 'Yemeni Market',
+            site_logo: '',
+            stripe_public_key: process.env.STRIPE_PUBLIC_KEY || '',
+        });
+    }
+});
+
 // Routes will be defined below
 
 
