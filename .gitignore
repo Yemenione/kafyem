@@ -25,3 +25,6 @@ npm-debug.log*
 
 # Prisma
 prisma/migrations/
+
+# Reference directory (contains another git repo)
+yemeni_market_reference/

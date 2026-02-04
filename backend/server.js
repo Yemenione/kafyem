@@ -1330,8 +1330,8 @@ app.post('/api/newsletter', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Handle SPA Client-side routing (Must be last route)
-app.get('*', (req, res) => {
+// Handle SPA Client-side routing (Must be last middleware)
+app.use((req, res, next) => {
     // Avoid intercepting API routes
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API route not found' });
@@ -1344,14 +1344,14 @@ app.get('*', (req, res) => {
     console.log(`[SPA Routing] Request for: ${req.path}`);
 
     if (require('fs').existsSync(prodIndex)) {
-        res.sendFile(prodIndex);
+        return res.sendFile(prodIndex);
     } else if (require('fs').existsSync(devIndex)) {
-        res.sendFile(devIndex);
+        return res.sendFile(devIndex);
     } else if (require('fs').existsSync(rootIndex)) {
-        res.sendFile(rootIndex);
+        return res.sendFile(rootIndex);
     } else {
         console.error(`[SPA Error] No index.html found at: ${prodIndex} or ${devIndex}`);
-        res.status(404).send("Frontend build not found. Please ensure 'dist' exists at the root or 'public' in backend.");
+        return res.status(404).send("Frontend build not found. Please ensure 'dist' exists at the root or 'public' in backend.");
     }
 });
 
