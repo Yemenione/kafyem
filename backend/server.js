@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -215,8 +216,9 @@ const loadConfig = async () => {
         if (process.env.SMTP_PASS) config.smtp_pass = process.env.SMTP_PASS;
         if (process.env.SMTP_SECURE) config.smtp_secure = process.env.SMTP_SECURE;
 
-        if (process.env.STRIPE_SECRET_KEY) config.stripe_secret_key = process.env.STRIPE_SECRET_KEY;
-        if (process.env.STRIPE_PUBLIC_KEY) config.stripe_public_key = process.env.STRIPE_PUBLIC_KEY;
+        // STRIPE: Only use Env as fallback if DB is missing (Allowing DB-based management)
+        if (!config.stripe_secret_key && process.env.STRIPE_SECRET_KEY) config.stripe_secret_key = process.env.STRIPE_SECRET_KEY;
+        if (!config.stripe_public_key && process.env.STRIPE_PUBLIC_KEY) config.stripe_public_key = process.env.STRIPE_PUBLIC_KEY;
 
         console.log("Configuration loaded from DB & Env");
     } catch (e) {
