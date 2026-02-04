@@ -1352,35 +1352,30 @@ app.post('/api/newsletter', async (req, res) => {
     }
 });
 
-// Serve Static Frontend Files
-// Production: serve from 'public' folder inside backend
-// Development: serve from '../dist' if available
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, '../dist')));
+// API-only mode - No frontend serving
+// Frontend is hosted separately on yemenimarket.fr
+// This backend serves API endpoints only
 
-// Handle SPA Client-side routing (Must be last middleware)
-app.use((req, res, next) => {
-    // Avoid intercepting API routes
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: 'API route not found' });
-    }
+// Catch-all for undefined API routes
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+});
 
-    const prodIndex = path.resolve(__dirname, 'public', 'index.html');
-    const devIndex = path.resolve(__dirname, '..', 'dist', 'index.html');
-    const rootIndex = path.resolve(__dirname, 'index.html'); // Backup if server.js moved to root
-
-    console.log(`[SPA Routing] Request for: ${req.path}`);
-
-    if (require('fs').existsSync(prodIndex)) {
-        return res.sendFile(prodIndex);
-    } else if (require('fs').existsSync(devIndex)) {
-        return res.sendFile(devIndex);
-    } else if (require('fs').existsSync(rootIndex)) {
-        return res.sendFile(rootIndex);
-    } else {
-        console.error(`[SPA Error] No index.html found at: ${prodIndex} or ${devIndex}`);
-        return res.status(404).send("Frontend build not found. Please ensure 'dist' exists at the root or 'public' in backend.");
-    }
+// Root endpoint for health check
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Yemeni Market API',
+        status: 'running',
+        version: '1.0.0',
+        endpoints: {
+            test: '/api/test',
+            config: '/api/config',
+            products: '/api/products',
+            auth: '/api/auth/*',
+            orders: '/api/orders',
+            checkout: '/api/create-payment-intent'
+        }
+    });
 });
 
 loadConfig().then(() => {
