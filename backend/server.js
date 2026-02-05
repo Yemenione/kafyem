@@ -10,7 +10,20 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// CORS Configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://www.yemenimarket.fr',
+        'https://yemenimarket.fr'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- API CONNECTIVITY TEST ---
@@ -49,23 +62,15 @@ app.get('/api/test', async (req, res) => {
 // --- STORE CONFIGURATION ENDPOINT ---
 app.get('/api/config', async (req, res) => {
     try {
-        // Try to get config from database first
-        const dbConfig = await prisma.store_config.findMany();
-        const configMap = {};
-        dbConfig.forEach(item => {
-            configMap[item.key] = item.value;
-        });
-
-        // Return configuration with fallbacks to environment variables
+        // Return configuration populated by loadConfig() with fallback to env
         res.json({
-            site_name: configMap.site_name || 'Yemeni Market',
-            site_logo: configMap.site_logo || '',
-            stripe_public_key: configMap.stripe_public_key || process.env.STRIPE_PUBLIC_KEY || '',
+            site_name: config.site_name || process.env.SITE_NAME || 'Yemeni Market',
+            site_logo: config.site_logo || process.env.SITE_LOGO || '',
+            stripe_public_key: config.stripe_public_key || process.env.STRIPE_PUBLIC_KEY || '',
             // Add other public config as needed
         });
     } catch (error) {
         console.error('Error fetching store config:', error);
-        // Fallback to environment variables if database fails
         res.json({
             site_name: 'Yemeni Market',
             site_logo: '',
@@ -602,11 +607,199 @@ app.get('/api/admin/orders', checkAdmin, async (req, res) => {
     }
 });
 
+// --- ADMIN: CATEGORIES ---
+app.get('/api/admin/categories', checkAdmin, async (req, res) => {
+    try {
+        const categories = await prisma.category.findMany({
+            include: { parent: true },
+            orderBy: { displayOrder: 'asc' }
+        });
+        res.json(categories);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
+app.post('/api/admin/categories', checkAdmin, async (req, res) => {
+    const { name, description, imageUrl, parentId, displayOrder, isActive } = req.body;
+    try {
+        const category = await prisma.category.create({
+            data: {
+                name,
+                slug: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+                description,
+                imageUrl,
+                parentId: parentId ? parseInt(parentId) : null,
+                displayOrder: displayOrder ? parseInt(displayOrder) : 0,
+                isActive: isActive !== undefined ? isActive : true,
+                translations: req.body.translations ? JSON.stringify(req.body.translations) : (req.body.name_translations ? JSON.stringify({
+                    name: req.body.name_translations,
+                    description: req.body.description_translations,
+                    meta_title: req.body.meta_title_translations,
+                    meta_description: req.body.meta_description_translations
+                }) : null)
+            }
+        });
+        res.json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create category' });
+    }
+});
+
+app.put('/api/admin/categories/:id', checkAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { name, description, imageUrl, parentId, displayOrder, isActive } = req.body;
+    try {
+        const category = await prisma.category.update({
+            where: { id: parseInt(id) },
+            data: {
+                name,
+                description,
+                imageUrl,
+                parentId: parentId ? parseInt(parentId) : null,
+                displayOrder: displayOrder ? parseInt(displayOrder) : 0,
+                isActive: isActive !== undefined ? isActive : true,
+                translations: req.body.translations ? JSON.stringify(req.body.translations) : (req.body.name_translations ? JSON.stringify({
+                    name: req.body.name_translations,
+                    description: req.body.description_translations,
+                    meta_title: req.body.meta_title_translations,
+                    meta_description: req.body.meta_description_translations
+                }) : null)
+            }
+        });
+        res.json(category);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update category' });
+    }
+});
+
+app.delete('/api/admin/categories/:id', checkAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.category.delete({ where: { id: parseInt(id) } });
+        res.json({ message: 'Category deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete category' });
+    }
+});
+
+// --- ADMIN: BRANDS ---
+app.get('/api/admin/brands', checkAdmin, async (req, res) => {
+    try {
+        const brands = await prisma.brands.findMany({
+            orderBy: { name: 'asc' }
+        });
+        res.json(brands);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch brands' });
+    }
+});
+
+app.post('/api/admin/brands', checkAdmin, async (req, res) => {
+    const { name, logo, description, is_active } = req.body;
+    try {
+        const brand = await prisma.brands.create({
+            data: {
+                name,
+                slug: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+                logo,
+                description,
+                is_active: is_active !== undefined ? is_active : true,
+                updated_at: new Date()
+            }
+        });
+        res.json(brand);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create brand' });
+    }
+});
+
+// --- ADMIN: ATTRIBUTES ---
+app.get('/api/admin/attributes', checkAdmin, async (req, res) => {
+    try {
+        const attrs = await prisma.attributes.findMany({
+            include: { attribute_values: true }
+        });
+        res.json(attrs);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch attributes' });
+    }
+});
+
+app.post('/api/admin/attributes', checkAdmin, async (req, res) => {
+    const { name, public_name, type, values } = req.body;
+    try {
+        const attr = await prisma.attributes.create({
+            data: {
+                name,
+                public_name,
+                type: type || 'select',
+                attribute_values: {
+                    create: values ? values.map(v => ({
+                        name: v.name,
+                        value: v.value,
+                        position: v.position || 0
+                    })) : []
+                }
+            },
+            include: { attribute_values: true }
+        });
+        res.json(attr);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create attribute' });
+    }
+});
+
+// --- ADMIN: COUPONS ---
+app.get('/api/admin/coupons', checkAdmin, async (req, res) => {
+    try {
+        const coupons = await prisma.coupons.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        res.json(coupons);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch coupons' });
+    }
+});
+
+app.post('/api/admin/coupons', checkAdmin, async (req, res) => {
+    const { code, discount_type, discount_value, min_order_amount, starts_at, expires_at, is_active } = req.body;
+    try {
+        const coupon = await prisma.coupons.create({
+            data: {
+                code,
+                discount_type: discount_type || 'PERCENTAGE',
+                discount_value: parseFloat(discount_value),
+                min_order_amount: min_order_amount ? parseFloat(min_order_amount) : 0,
+                starts_at: starts_at ? new Date(starts_at) : new Date(),
+                expires_at: expires_at ? new Date(expires_at) : null,
+                is_active: is_active !== undefined ? is_active : true
+            }
+        });
+        res.json(coupon);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create coupon' });
+    }
+});
+
 // Admin: Get All Products (Detailed for Management)
 app.get('/api/admin/products', checkAdmin, async (req, res) => {
     try {
         const products = await prisma.products.findMany({
-            include: { categories: true },
+            include: {
+                categories: true,
+                product_variants: true
+            },
             orderBy: { created_at: 'desc' }
         });
         res.json(products);
@@ -618,39 +811,27 @@ app.get('/api/admin/products', checkAdmin, async (req, res) => {
 
 // Admin: Create Product
 app.post('/api/admin/products', checkAdmin, async (req, res) => {
-    const { name, description, price, category_name, stock } = req.body;
+    const { name, description, price, category_id, stock_quantity, images, is_active, is_featured, brand_id, translations } = req.body;
     try {
-        // Use 'Category' model name from schema.prisma if it was capitalized there
-        // Actually schema says `model Category` but map is `categories`. 
-        // Prisma Client usually uses the Model name.
-        // Let's check imports. `const { PrismaClient } = require('@prisma/client');`
-        // We'll trust `prisma.category` works if model is `Category` (uncapitalized property usually if mapped? No, strictly key sensitive).
-        // Wait, schema has `model Category`. Client property is `prisma.category`.
-
-        let category = await prisma.category.findFirst({ where: { name: category_name } });
-        if (!category && category_name) {
-            category = await prisma.category.create({
-                data: {
-                    name: category_name,
-                    slug: category_name.toLowerCase().replace(/\s+/g, '-')
-                }
-            });
-        }
-
         const product = await prisma.products.create({
             data: {
                 name,
                 description,
-                price: parseFloat(price),
-                stock_quantity: parseInt(stock) || 0,
+                price: parseFloat(price) || 0,
+                stock_quantity: parseInt(stock_quantity) || 0,
                 slug: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-                categories: category ? { connect: { id: category.id } } : undefined,
-                is_active: true
+                category_id: category_id ? parseInt(category_id) : null,
+                brand_id: brand_id ? parseInt(brand_id) : null,
+                images: Array.isArray(images) ? JSON.stringify(images) : images,
+                is_active: is_active !== undefined ? is_active : true,
+                is_featured: is_featured !== undefined ? is_featured : false,
+                translations: translations ? JSON.stringify(translations) : null,
+                updated_at: new Date()
             }
         });
         res.json(product);
     } catch (error) {
-        console.error(error);
+        console.error("Create Product Error:", error);
         res.status(500).json({ error: 'Failed to create product' });
     }
 });
@@ -658,27 +839,22 @@ app.post('/api/admin/products', checkAdmin, async (req, res) => {
 // Admin: Update Product
 app.put('/api/admin/products/:id', checkAdmin, async (req, res) => {
     const { id } = req.params;
-    const { name, description, price, category_name, stock, is_active } = req.body;
+    const { name, description, price, category_id, stock_quantity, images, is_active, is_featured, brand_id, translations } = req.body;
     try {
-        let category = await prisma.category.findFirst({ where: { name: category_name } });
-        if (!category && category_name) {
-            category = await prisma.category.create({
-                data: {
-                    name: category_name,
-                    slug: category_name.toLowerCase().replace(/\s+/g, '-')
-                }
-            });
-        }
-
         const updated = await prisma.products.update({
             where: { id: parseInt(id) },
             data: {
                 name,
                 description,
                 price: parseFloat(price),
-                stock_quantity: parseInt(stock) || 0,
-                is_active: is_active ?? true,
-                categories: category ? { connect: { id: category.id } } : { disconnect: true }
+                stock_quantity: stock_quantity !== undefined ? parseInt(stock_quantity) : undefined,
+                category_id: category_id ? parseInt(category_id) : undefined,
+                brand_id: brand_id ? parseInt(brand_id) : undefined,
+                images: Array.isArray(images) ? JSON.stringify(images) : images,
+                is_active: is_active !== undefined ? is_active : undefined,
+                is_featured: is_featured !== undefined ? is_featured : undefined,
+                translations: translations ? JSON.stringify(translations) : undefined,
+                updated_at: new Date()
             }
         });
         res.json(updated);
@@ -763,23 +939,6 @@ app.put('/api/admin/orders/:id/status', checkAdmin, async (req, res) => {
     } catch (error) {
         console.error("Update Status Error:", error);
         res.status(500).json({ error: "Failed to update order status" });
-    }
-});
-// --- PUBLIC CONFIG ROUTE ---
-app.get('/api/config', async (req, res) => {
-    try {
-        // Only return configs marked as public in the database
-        const publicConfigs = await prisma.store_config.findMany({
-            where: { isPublic: true }
-        });
-
-        const configMap = {};
-        publicConfigs.forEach(c => configMap[c.key] = c.value);
-
-        res.json(configMap);
-    } catch (error) {
-        console.error("Failed to fetch public config:", error);
-        res.status(500).json({ error: 'Failed to load configuration' });
     }
 });
 
@@ -986,6 +1145,82 @@ app.get('/api/products/:id/reviews', async (req, res) => {
     } catch (error) {
         console.error("Get Reviews Error:", error);
         res.status(500).json({ error: "Failed to get reviews" });
+    }
+});
+
+// --- STRIPE PAYMENT INTENT ---
+app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+        const { items, shipping } = req.body;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ error: 'No items provided' });
+        }
+
+        // Calculate total from database prices (server-side validation)
+        let subtotal = 0;
+        for (const item of items) {
+            const product = await prisma.products.findUnique({
+                where: { id: parseInt(item.id) }
+            });
+
+            if (!product) {
+                return res.status(404).json({ error: `Product ${item.id} not found` });
+            }
+
+            const price = item.variant ? parseFloat(item.variant.price) : parseFloat(product.price);
+            subtotal += price * parseInt(item.quantity);
+        }
+
+        // Calculate tax (20% TVA for France)
+        const taxRate = 0.20;
+        const tax = subtotal * taxRate;
+
+        // Shipping cost
+        const shippingCost = parseFloat(shipping) || (subtotal > 100 ? 0 : 15);
+
+        // Total in cents for Stripe
+        const total = Math.round((subtotal + tax + shippingCost) * 100);
+
+        // Initialize Stripe
+        const stripeKey = config.stripe_secret_key || process.env.STRIPE_SECRET_KEY;
+        if (!stripeKey) {
+            return res.status(500).json({ error: 'Stripe not configured' });
+        }
+
+        const stripe = require('stripe')(stripeKey);
+
+        // Create PaymentIntent
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: total,
+            currency: 'eur',
+            automatic_payment_methods: {
+                enabled: true
+            },
+            metadata: {
+                subtotal: subtotal.toFixed(2),
+                tax: tax.toFixed(2),
+                shipping: shippingCost.toFixed(2)
+            }
+        });
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            amount: total,
+            breakdown: {
+                subtotal: subtotal.toFixed(2),
+                tax: tax.toFixed(2),
+                shipping: shippingCost.toFixed(2),
+                total: (total / 100).toFixed(2)
+            }
+        });
+
+    } catch (error) {
+        console.error('PaymentIntent Error:', error);
+        res.status(500).json({
+            error: 'Failed to create payment intent',
+            details: error.message
+        });
     }
 });
 
@@ -1380,6 +1615,117 @@ app.post('/api/newsletter', async (req, res) => {
 // app.use('/api/:path*', (req, res) => {
 //     res.status(404).json({ error: 'API endpoint not found' });
 // });
+// --- ADMIN: TRANSLATE ---
+app.post('/api/admin/translate', checkAdmin, async (req, res) => {
+    const { text, targetLangs } = req.body;
+    try {
+        // Simple mock for now, can be replaced with real AI/Translation API
+        const translations = {};
+        for (const lang of targetLangs) {
+            if (lang === 'fr') translations[lang] = `[FR] ${text}`;
+            else if (lang === 'ar') translations[lang] = `[AR] ${text}`;
+            else translations[lang] = `[${lang.toUpperCase()}] ${text}`;
+        }
+        res.json({ translations });
+    } catch (error) {
+        res.status(500).json({ error: 'Translation failed' });
+    }
+});
+
+// --- ADMIN: MEDIA ---
+app.post('/api/admin/media/upload', checkAdmin, async (req, res) => {
+    // This is a placeholder for file upload
+    // In a real app, use multer or similar
+    res.json({ path: '/uploads/placeholder.jpg' });
+});
+
+// Admin: Update Product (Duplicate removed/Alternative handling)
+// We already have a put route above. This one might have been a placeholder or specific to some fields.
+// The one around line 1502 was using a different destructured set of fields.
+// I'll keep the more comprehensive one and ensure it covers everything.
+
+app.delete('/api/admin/products/:id', checkAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await prisma.products.delete({ where: { id: parseInt(id) } });
+        res.json({ message: 'Product deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
+// --- ADMIN: NEWSLETTER ---
+app.get('/api/admin/newsletter', checkAdmin, async (req, res) => {
+    try {
+        const subscribers = await prisma.newsletter_subscribers.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        res.json(subscribers);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch newsletter subscribers' });
+    }
+});
+
+// --- ADMIN: TICKETS ---
+app.get('/api/admin/tickets', checkAdmin, async (req, res) => {
+    try {
+        const tickets = await prisma.tickets.findMany({
+            include: { customers: true },
+            orderBy: { created_at: 'desc' }
+        });
+        res.json(tickets);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+});
+
+// --- ADMIN: MEDIA ---
+app.get('/api/admin/files', checkAdmin, async (req, res) => {
+    try {
+        const files = await prisma.media_files.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        res.json(files);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch media files' });
+    }
+});
+
+app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+        const { amount, currency = 'usd', metadata = {} } = req.body;
+
+        if (!config.stripe_secret_key) {
+            return res.status(500).json({ error: 'Stripe is not configured on the server.' });
+        }
+
+        const stripe = require('stripe')(config.stripe_secret_key);
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100), // Convert to cents
+            currency: currency.toLowerCase(),
+            metadata: {
+                ...metadata,
+                source: 'Yemeni Market'
+            },
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        });
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            id: paymentIntent.id
+        });
+    } catch (error) {
+        console.error('Stripe Payment Intent Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Root endpoint for health check
 app.get('/', (req, res) => {

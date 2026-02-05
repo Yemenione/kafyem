@@ -164,18 +164,21 @@ model cart_rules {
 }
 
 model Category {
-  id           Int        @id @default(autoincrement())
-  name         String     @db.VarChar(255)
-  slug         String?    @unique(map: "slug") @db.VarChar(255)
-  description  String?    @db.Text
-  imageUrl     String?    @map("image_url") @db.VarChar(255)
-  parentId     Int?       @map("parent_id")
-  isActive     Boolean?   @default(true) @map("is_active")
-  displayOrder Int?       @default(0) @map("display_order")
-  createdAt    DateTime?  @default(now()) @map("created_at") @db.Timestamp(0)
-  parent       Category?  @relation("categoriesTocategories", fields: [parentId], references: [id], onUpdate: Restrict, map: "categories_ibfk_1")
-  children     Category[] @relation("categoriesTocategories")
-  products     products[]
+  id              Int        @id @default(autoincrement())
+  name            String     @db.VarChar(255)
+  slug            String?    @unique(map: "slug") @db.VarChar(255)
+  description     String?    @db.Text
+  imageUrl        String?    @map("image_url") @db.VarChar(255)
+  parentId        Int?       @map("parent_id")
+  isActive        Boolean?   @default(true) @map("is_active")
+  displayOrder    Int?       @default(0) @map("display_order")
+  createdAt       DateTime?  @default(now()) @map("created_at") @db.Timestamp(0)
+  metaTitle       String?    @map("meta_title")
+  metaDescription String?    @map("meta_description")
+  translations    String?    @db.LongText
+  parent          Category?  @relation("categoriesTocategories", fields: [parentId], references: [id], onUpdate: Restrict, map: "categories_ibfk_1")
+  children        Category[] @relation("categoriesTocategories")
+  products        products[]
 
   @@index([parentId], map: "parent_id")
   @@map("categories")
@@ -414,7 +417,15 @@ model products {
   is_active        Boolean?           @default(true)
   is_featured      Boolean?           @default(false)
   brand_id         Int?
+  supplier_id      Int?
   weight           Decimal?           @db.Decimal(10, 3)
+  width            Decimal?           @db.Decimal(10, 2)
+  height           Decimal?           @db.Decimal(10, 2)
+  depth            Decimal?           @db.Decimal(10, 2)
+  reference        String?            @unique
+  hs_code          String?            @map("hs_code")
+  origin_country   String?            @map("origin_country")
+  tax_rule_id      Int?               @map("tax_rule_id")
   translations     String?            @db.LongText
   created_at       DateTime?          @default(now()) @db.Timestamp(0)
   cart_items       cart_items[]
@@ -426,7 +437,9 @@ model products {
   carriers         carriers[]         @relation("CarrierToProduct")
   wishlist         wishlist[]
 
+
   @@index([category_id], map: "category_id")
+
 }
 
 model reviews {

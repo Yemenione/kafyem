@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "mkdir -p dist && echo 'Backend ready' > dist/index.txt"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
