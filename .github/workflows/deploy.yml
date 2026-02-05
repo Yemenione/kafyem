@@ -1,42 +1,14 @@
-name: Deploy to Hostinger
+# Deployment is handled directly by Hostinger
+# This workflow is disabled
+name: Disabled Workflow
 
 on:
   push:
-    branches:
-      - main
+    branches: [ never ]
 
 jobs:
-  deploy:
+  disabled:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
-      
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-        env:
-          VITE_API_URL: https://api.yemenimarket.fr/
-          VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
-      
-      - name: Deploy to Hostinger via FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
-        with:
-          server: ftp.yemenimarket.fr
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: /public_html/
-          dangerous-clean-slate: true
+      - name: Workflow Disabled
+        run: echo "This workflow is disabled. Deployment is handled by Hostinger."
