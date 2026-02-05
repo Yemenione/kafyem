@@ -33,7 +33,7 @@ const Settings = () => {
         setSaving(key);
         try {
             const token = localStorage.getItem('token');
-            await axios.put('http://localhost:5000/api/admin/config',
+            await axios.put(`${API_URL}/api/admin/config`,
                 { key, value, isPublic, description },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

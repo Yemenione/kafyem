@@ -165,7 +165,8 @@ const Checkout = () => {
                 phone: contact.phone
             };
 
-            await axios.post('http://localhost:5000/api/orders', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            await axios.post(`${API_URL}/api/orders`, {
                 user_id: user?.id || null,
                 items: cartItems.map(item => ({
                     product_id: item.id,

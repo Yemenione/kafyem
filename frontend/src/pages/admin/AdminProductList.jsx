@@ -1,164 +1,246 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Plus, Search, Filter, Edit, Trash2, Package, ChevronLeft, ChevronRight, Loader2, Download, ExternalLink } from 'lucide-react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Search, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
+import ModernAdminPage from '../../components/admin/ModernAdminPage';
 
 const AdminProductList = () => {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState("");
+    const [page, setPage] = useState(0);
+    const limit = 20;
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/api/admin/products`, {
+            const res = await axios.get('/api/admin/products', {
+                params: {
+                    limit,
+                    offset: page * limit,
+                    search: searchTerm
+                },
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setProducts(response.data);
+            setProducts(res.data || []);
         } catch (error) {
             console.error("Failed to fetch products", error);
+            toast.error(t('admin.products.loadFailed'));
         } finally {
             setLoading(false);
+        }
+    }, [page, searchTerm, t]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchProducts();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [fetchProducts]);
+
+    const toggleStatus = async (id, currentStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`/api/admin/products/${id}`, { is_active: !currentStatus ? 1 : 0 }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success(t('admin.categories.updated'));
+            setProducts(products.map(p => p.id === id ? { ...p, is_active: !currentStatus ? 1 : 0 } : p));
+        } catch (error) {
+            toast.error(t('admin.categories.operationFailed'));
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to deactivate this product?")) return;
+        if (!window.confirm(t('admin.products.confirmDelete'))) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`${API_URL}/api/admin/products/${id}`, {
+            await axios.delete(`/api/admin/products/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchProducts();
-            toast.success("Product deactivated successfully");
+            toast.success(t('admin.categories.deleted'));
+            setProducts(products.filter(p => p.id !== id));
         } catch (error) {
-            toast.error("Failed to delete product");
+            toast.error(t('admin.categories.deleteFailed'));
         }
     };
 
-    const filtered = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.categories?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (loading) return <div className="p-8">Loading products...</div>;
-
     return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-serif font-bold text-coffee-dark">Product Management</h1>
-                    <p className="text-gray-500">Manage your catalog, stock, and pricing.</p>
-                </div>
-                <Button
-                    onClick={() => navigate('/admin/products/new')}
-                    className="bg-gold hover:bg-gold/90 text-coffee-dark font-bold"
-                >
-                    <Plus className="w-4 h-4 mr-2" /> Add Product
-                </Button>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-50 bg-gray-50/50">
-                    <div className="relative max-w-sm">
-                        <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
-                        <Input
-                            placeholder="Search products..."
-                            className="pl-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+        <ModernAdminPage
+            title={t('admin.products.title')}
+            description="Manage storefront inventory, pricing, and availability status."
+        >
+            <div className="space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="flex gap-3 ml-auto">
+                        <button className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm font-bold shadow-sm">
+                            <Download size={18} /> {t('admin.common.export')}
+                        </button>
+                        <Link
+                            to="/admin/products/new"
+                            className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 text-white px-5 py-2 rounded-xl hover:shadow-lg transition-all text-sm font-bold"
+                        >
+                            <Plus size={18} /> {t('admin.products.addNew')}
+                        </Link>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left bg-white">
-                        <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider font-bold">
-                            <tr>
-                                <th className="px-6 py-4">Product</th>
-                                <th className="px-6 py-4">Category</th>
-                                <th className="px-6 py-4">Price</th>
-                                <th className="px-6 py-4">Stock</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filtered.map(product => (
-                                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                                                <img
-                                                    src={product.image_url || `https://placehold.co/100x100/D4AF37/FFFFFF?text=${encodeURIComponent(product.name[0])}`}
-                                                    alt=""
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-coffee-dark text-sm">{product.name}</p>
-                                                <p className="text-xs text-gray-400">ID: {product.id}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs bg-coffee-light/20 text-coffee-dark px-2 py-1 rounded">
-                                            {product.categories?.name || 'Uncategorized'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 font-medium text-sm">
-                                        ${parseFloat(product.price).toFixed(2)}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <span className={product.stock_quantity < 10 ? 'text-red-500 font-bold' : 'text-gray-600'}>
-                                            {product.stock_quantity}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {product.is_active ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => window.open(`/products/${product.id}`, '_blank')}
-                                                className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-                                                title="View Public"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => navigate(`/admin/products/edit/${product.id}`)}
-                                                className="p-2 text-gray-400 hover:text-gold transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(product.id)}
-                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                                title="Deactivate"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-gray-50 dark:border-zinc-800 flex flex-col sm:flex-row gap-4 items-center">
+                        <div className="relative flex-1 group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder={t('admin.products.searchPlaceholder')}
+                                className="w-full pl-12 pr-4 py-2.5 rounded-xl border-none bg-gray-50 dark:bg-zinc-800 focus:ring-2 focus:ring-[var(--coffee-brown)]/20 transition-all outline-none text-sm font-medium"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setPage(0);
+                                }}
+                            />
+                        </div>
+                        <button className="flex items-center gap-2 px-5 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+                            <Filter size={18} /> {t('admin.common.filter')}
+                        </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        {loading && products.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 gap-4">
+                                <Loader2 className="w-8 h-8 animate-spin text-[var(--coffee-brown)]" />
+                                <p className="text-gray-400 text-xs font-black uppercase tracking-widest">{t('admin.common.loading')}</p>
+                            </div>
+                        ) : !loading && products.length === 0 ? (
+                            <div className="text-center py-16 space-y-3">
+                                <Package className="w-12 h-12 text-gray-100 mx-auto" />
+                                <h3 className="text-lg font-black text-gray-900 dark:text-white">{t('admin.common.noResults')}</h3>
+                            </div>
+                        ) : (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50/50 dark:bg-zinc-800/30 text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
+                                        <th className="px-6 py-4">{t('admin.products.name')}</th>
+                                        <th className="px-5 py-4">SKU</th>
+                                        <th className="px-5 py-4">{t('admin.products.category')}</th>
+                                        <th className="px-5 py-4">{t('admin.products.price')}</th>
+                                        <th className="px-5 py-4">{t('admin.products.stock')}</th>
+                                        <th className="px-5 py-4 text-center">{t('admin.common.status')}</th>
+                                        <th className="px-6 py-4 text-right">{t('admin.common.actions')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                                    {products.map((product) => (
+                                        <tr key={product.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/20 transition-all">
+                                            <td className="px-6 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 relative rounded-xl bg-gray-100 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex-shrink-0 overflow-hidden shadow-sm">
+                                                        <img
+                                                            src={product.image_url || '/placeholder.svg'}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-black text-gray-900 dark:text-white truncate group-hover:text-[var(--coffee-brown)] transition-colors tracking-tight">{product.name}</p>
+                                                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.1em] mt-0.5">REF: #{product.id.toString().padStart(4, '0')}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <span className="font-mono text-[10px] text-gray-500 bg-gray-50 dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-100 dark:border-zinc-700">
+                                                    {product.sku || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-wider border border-zinc-200/50">
+                                                    {product.categories?.name || 'Uncategorized'}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-sm font-black text-gray-900 dark:text-white">
+                                                <span className="text-[10px] opacity-40 mr-1 font-normal">$</span>
+                                                {Number(product.price).toFixed(2)}
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <div className="h-1 w-16 bg-gray-50 dark:bg-zinc-800/80 rounded-full overflow-hidden border border-gray-100/50">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-1000 ${product.stock_quantity > 10 ? 'bg-emerald-500' : product.stock_quantity > 0 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                                            style={{ width: `${Math.min(100, (product.stock_quantity / 50) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${product.stock_quantity > 10 ? 'text-emerald-600' : product.stock_quantity > 0 ? 'text-amber-600' : 'text-rose-500'}`}>
+                                                        {product.stock_quantity === 0 ? 'Sold Out' : `${product.stock_quantity} Units`}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-3 text-center">
+                                                <button
+                                                    onClick={() => toggleStatus(product.id, product.is_active)}
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[8px] font-black uppercase tracking-[0.15em] transition-all border
+                                                        ${product.is_active
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                                                            : 'bg-zinc-50 text-zinc-400 border-zinc-200 hover:bg-zinc-100'}`}
+                                                >
+                                                    <span className={`w-1 h-1 rounded-full ${product.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-300'}`} />
+                                                    {product.is_active ? t('admin.common.active') : t('admin.common.inactive')}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <Link
+                                                        to={`/admin/products/edit/${product.id}`}
+                                                        className="p-2 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl hover:bg-[var(--coffee-brown)] hover:text-white shadow-sm transition-all group/btn"
+                                                    >
+                                                        <Edit size={16} className="group-hover/btn:scale-110 transition-transform" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(product.id)}
+                                                        className="p-2 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl hover:bg-rose-600 hover:text-white shadow-sm transition-all group/btn"
+                                                    >
+                                                        <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    <div className="p-4 bg-gray-50/50 dark:bg-zinc-800/30 border-t border-gray-50 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <p className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                            {t('admin.common.showing')} {products.length} {t('admin.common.results')}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={page === 0}
+                                onClick={() => setPage(p => Math.max(0, p - 1))}
+                                className="p-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 disabled:opacity-30 hover:shadow-md transition-all"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <div className="bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 px-3 py-1.5 rounded-lg text-xs font-black shadow-sm">
+                                {page + 1}
+                            </div>
+                            <button
+                                disabled={products.length < limit}
+                                onClick={() => setPage(p => p + 1)}
+                                className="p-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 disabled:opacity-30 hover:shadow-md transition-all"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </ModernAdminPage>
     );
 };
 

@@ -38,6 +38,18 @@ const AdminProductList = lazy(() => import('./pages/admin/AdminProductList'));
 const ProductEditor = lazy(() => import('./pages/admin/ProductEditor'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'));
+const Categories = lazy(() => import('./pages/admin/Categories'));
+const Attributes = lazy(() => import('./pages/admin/Attributes'));
+const Brands = lazy(() => import('./pages/admin/Brands'));
+const Coupons = lazy(() => import('./pages/admin/Coupons'));
+const Newsletter = lazy(() => import('./pages/admin/Newsletter'));
+const Chat = lazy(() => import('./pages/admin/Chat'));
+const Tickets = lazy(() => import('./pages/admin/Tickets'));
+const CMS = lazy(() => import('./pages/admin/CMS'));
+const Blog = lazy(() => import('./pages/admin/Blog'));
+const Files = lazy(() => import('./pages/admin/Files'));
+const Carriers = lazy(() => import('./pages/admin/Carriers'));
+const Tax = lazy(() => import('./pages/admin/Tax'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
 
 // Loading Fallback
@@ -104,8 +116,20 @@ function App() {
                     <Route path="products" element={<AdminProductList />} />
                     <Route path="products/new" element={<ProductEditor />} />
                     <Route path="products/edit/:id" element={<ProductEditor />} />
+                    <Route path="categories" element={<Categories />} />
+                    <Route path="attributes" element={<Attributes />} />
+                    <Route path="brands" element={<Brands />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="customers" element={<AdminCustomers />} />
+                    <Route path="coupons" element={<Coupons />} />
+                    <Route path="newsletter" element={<Newsletter />} />
+                    <Route path="chat" element={<Chat />} />
+                    <Route path="tickets" element={<Tickets />} />
+                    <Route path="cms" element={<CMS />} />
+                    <Route path="blog" element={<Blog />} />
+                    <Route path="files" element={<Files />} />
+                    <Route path="carriers" element={<Carriers />} />
+                    <Route path="tax" element={<Tax />} />
                     <Route path="settings" element={<Settings />} />
                   </Route>
 

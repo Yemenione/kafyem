@@ -54,13 +54,13 @@ const ProductDetails = () => {
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`http://localhost:5000/api/products/${id}/reviews`, newReview, {
+            await axios.post(`${API_URL}/api/products/${id}/reviews`, newReview, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNewReview({ rating: 5, comment: '' });
             toast.success(t('review_submitted'));
             // Refresh reviews
-            const response = await axios.get(`http://localhost:5000/api/products/${id}/reviews`);
+            const response = await axios.get(`${API_URL}/api/products/${id}/reviews`);
             setReviews(response.data);
         } catch (err) {
             console.error("Error submitting review", err);
@@ -73,7 +73,7 @@ const ProductDetails = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+                const response = await axios.get(`${API_URL}/api/products/${id}`);
                 setProduct(response.data);
             } catch (error) {
                 console.log("Using fallback mock data");
