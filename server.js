@@ -1,22 +1,13 @@
 /**
- * Root Entry Point (v1.0.3)
- * Redirects execution to the backend server.
+ * Root Entry Point (v1.0.4)
+ * Loads and integrates the backend server.
  */
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Immediate health check at root level
-app.get('/health', (req, res) => res.status(200).send('OK - ROOT ALIVE - v1.0.3'));
-
-console.log('--- ROOT BOOTING v1.0.3 ---');
+console.log('--- ROOT BOOTING v1.0.4 ---');
 console.log('Timestamp:', new Date().toISOString());
-console.log('Starting backend server...');
+console.log('Loading backend...');
 
-// Start server first
-const server = app.listen(PORT, () => {
-    console.log(`Root server listening on port ${PORT}`);
-});
+// Load the backend app (which exports the Express app with all routes)
+const backendApp = require('./backend/server.js');
 
-// Then require the backend (which will add more routes)
-require('./backend/server.js');
+console.log('Backend loaded successfully');
+console.log('Server should be running on port:', process.env.PORT || 5000);

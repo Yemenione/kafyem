@@ -42,12 +42,19 @@ app.get('/debug', (req, res) => {
     });
 });
 
-// START LISTENING IMMEDIATELY
+// START LISTENING IMMEDIATELY (only if not required by another file)
 // This ensures that Hostinger's proxy sees a live process ASAP
-const server = app.listen(PORT, () => {
-    console.log(`--- BOOTSTRAP SUCCESS ---`);
-    console.log(`Listening on port: ${PORT}`);
-});
+if (require.main === module) {
+    const server = app.listen(PORT, () => {
+        console.log(`--- BOOTSTRAP SUCCESS ---`);
+        console.log(`Listening on port: ${PORT}`);
+    });
+} else {
+    console.log('Backend loaded as module - routes registered');
+}
+
+// Export app for use by root server.js
+module.exports = app;
 
 // 2. ERROR HANDLERS
 process.on('uncaughtException', (err) => {
