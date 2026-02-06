@@ -94,6 +94,7 @@ app.get('/api/test', async (req, res) => {
 
     res.json({
         status: 'success',
+        version: '1.0.2',
         message: 'Backend is connected and running!',
         timestamp: new Date().toISOString(),
         env_check: {
@@ -101,7 +102,7 @@ app.get('/api/test', async (req, res) => {
             stripe_details: stripeDetails,
             smtp_host: process.env.SMTP_HOST || config.smtp_host || 'using_db_config'
         },
-        database: 'connected' // If we reached here, Prisma is working
+        database: 'connected'
     });
 });
 
