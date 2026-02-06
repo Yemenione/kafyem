@@ -1,14 +1,55 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+// 0. FILE SYSTEM LOGGING
+const fs = require('fs');
+const bootInfo = `--- BOOT ATTEMPT ---\nTime: ${new Date().toISOString()}\nNode: ${process.version}\nPort: ${process.env.PORT || 'unassigned'}\nDirectory: ${__dirname}\n`;
+try {
+    fs.appendFileSync('boot_log.txt', bootInfo);
+} catch (e) { }
+
+// 1. ABSOLUTE TOP - NO DEPENDENCIES EXCEPT EXPRESS
 const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Health check defined immediately
+app.get('/health', (req, res) => res.status(200).send('OK - SERVER ALIVE'));
+app.get('/debug', (req, res) => {
+    res.json({
+        status: 'alive',
+        node: process.version,
+        env: process.env.NODE_ENV || 'not_set',
+        port: PORT,
+        cwd: process.cwd(),
+        platform: process.platform
+    });
+});
+
+// START LISTENING IMMEDIATELY
+// This ensures that Hostinger's proxy sees a live process ASAP
+const server = app.listen(PORT, () => {
+    console.log(`--- BOOTSTRAP SUCCESS ---`);
+    console.log(`Listening on port: ${PORT}`);
+});
+
+// 2. ERROR HANDLERS
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception', err);
+    // Don't exit immediately in production if possible, but for 503 debugging we must see this
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// 3. LOAD LIBRARIES & CONFIGURATION
+const path = require('path');
+const dotenv = require('dotenv');
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
+const { PrismaClient } = require('./prisma/client');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
-const app = express();
-const PORT = process.env.PORT || 5000;
 
 // CORS Configuration
 const corsOptions = {
@@ -23,6 +64,10 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 };
+
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -1745,8 +1790,11 @@ app.get('/', (req, res) => {
     });
 });
 
-loadConfig().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+
+// Start server first, then load config
+// (Listener moved to top)
+
+// Load config asynchronously so it doesn't block startup
+loadConfig().catch(err => {
+    console.error('Initial config load failed:', err);
 });
