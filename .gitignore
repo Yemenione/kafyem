@@ -23,6 +23,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+backend/boot_log.txt
+backend/error_log.txt
 
 # Prisma
 prisma/migrations/
