@@ -1,18 +1,40 @@
 /**
- * Root Entry Point
- * Redirects execution to the backend/server.js
+ * Root Entry Point (v1.0.1)
+ * This file is executed by Hostinger Node.js Selector.
  */
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-console.log('--- ROOT ENTRY POINT STARTED (v1.0.1) ---');
+// 1. IMMEDIATE FILE LOG (To verify Hostinger is running this file)
+try {
+    fs.appendFileSync('root_boot.txt', `BOOT ATTEMPT at ${new Date().toISOString()} on port ${PORT}\n`);
+} catch (e) { }
 
-// Root Health Check (redundant)
-app.get('/health', (req, res) => res.status(200).send('OK - ROOT ALIVE'));
-app.get('/', (req, res) => res.status(200).send('Yemeni Market Backend Root v1.0.1 - OK'));
+// 2. IMMEDIATE HEALTH CHECK
+app.get('/health', (req, res) => res.status(200).send('OK - ROOT ALIVE v1.0.1'));
+app.get('/debug-root', (req, res) => {
+    res.json({
+        source: 'ROOT_ENTRY_POINT',
+        version: '1.0.1',
+        time: new Date().toISOString(),
+        dir: __dirname,
+        node: process.version
+    });
+});
 
-// Forward all other requests to the backend server logic
-// However, since server.js also creates an app and listens, we might have a conflict.
-// Standard pattern for Hostinger's node selector: require the main file.
+// 3. DELEGATE TO BACKEND
+// We require the backend server but we must ensure it doesn't conflict if it tries to listen.
+// However, the best way on Hostinger is often to have ONE file that defines the app and listens.
+// Since the backend is a complex file, we will try to start the backend's logic.
 require('./backend/server.js');
+
+// 4. FALLBACK LISTEN (If backend/server.js didnt start it)
+if (!app._listening) {
+    app.listen(PORT, () => {
+        console.log(`Root listener active on port ${PORT}`);
+    });
+}
