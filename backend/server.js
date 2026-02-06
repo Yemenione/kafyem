@@ -42,15 +42,19 @@ app.get('/debug', (req, res) => {
     });
 });
 
-// START LISTENING
-// This ensures that Hostinger's proxy sees a live process ASAP
-const server = app.listen(PORT, () => {
-    console.log(`--- BOOTSTRAP SUCCESS ---`);
-    console.log(`Listening on port: ${PORT}`);
-});
+// FOR VERCEL DEPLOYMENT: Don't start server, just export the app
+// Vercel handles the serverless function invocation
+if (process.env.NODE_ENV !== 'production') {
+    // Only listen in development
+    const server = app.listen(PORT, () => {
+        console.log(`--- DEV SERVER RUNNING ---`);
+        console.log(`Listening on port: ${PORT}`);
+    });
+}
 
-// Export app for potential testing or requirements
+// Export app for Vercel
 module.exports = app;
+
 
 // 2. ERROR HANDLERS
 process.on('uncaughtException', (err) => {
