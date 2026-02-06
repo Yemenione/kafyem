@@ -1,9 +1,28 @@
 // 0. FILE SYSTEM LOGGING
 const fs = require('fs');
-const bootInfo = `--- BOOT ATTEMPT ---\nTime: ${new Date().toISOString()}\nNode: ${process.version}\nPort: ${process.env.PORT || 'unassigned'}\nDirectory: ${__dirname}\n`;
+const path = require('path');
+const boot_log_path = path.join(__dirname, 'boot_log.txt');
+const bootInfo = `
+--- BOOT ATTEMPT ---
+Time: ${new Date().toISOString()}
+Node: ${process.version}
+Port: ${process.env.PORT || 'unassigned'}
+Directory: ${__dirname}
+Env Variables: ${Object.keys(process.env).join(', ')}
+`;
 try {
-    fs.appendFileSync('boot_log.txt', bootInfo);
-} catch (e) { }
+    fs.appendFileSync(boot_log_path, bootInfo);
+} catch (e) {
+    console.error('Failed to write to boot_log.txt', e);
+}
+
+// 0.1 GLOBAL ERROR CAPTURE FOR 503 DEBUGGING
+process.on('uncaughtException', (err) => {
+    const errorMsg = `\n--- UNCAUGHT EXCEPTION ---\nTime: ${new Date().toISOString()}\nError: ${err.stack || err}\n`;
+    try { fs.appendFileSync(boot_log_path, errorMsg); } catch (e) { }
+    console.error(err);
+    process.exit(1);
+});
 
 // 1. ABSOLUTE TOP - NO DEPENDENCIES EXCEPT EXPRESS
 const express = require('express');
