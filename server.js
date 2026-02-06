@@ -15,11 +15,11 @@ try {
 } catch (e) { }
 
 // 2. IMMEDIATE HEALTH CHECK
-app.get('/health', (req, res) => res.status(200).send('OK - ROOT ALIVE v1.0.1'));
+app.get('/health', (req, res) => res.status(200).send('OK - ROOT ALIVE v1.0.2 - UPDATED: 2026-02-06 02:58'));
 app.get('/debug-root', (req, res) => {
     res.json({
         source: 'ROOT_ENTRY_POINT',
-        version: '1.0.1',
+        version: '1.0.2',
         time: new Date().toISOString(),
         dir: __dirname,
         node: process.version

@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Health check defined immediately
-app.get('/health', (req, res) => res.status(200).send('OK - SERVER ALIVE'));
+app.get('/health', (req, res) => res.status(200).send('OK - SERVER ALIVE - v1.0.2 - UPDATED: 2026-02-06 02:58'));
 app.get('/debug', (req, res) => {
     res.json({
         status: 'alive',
