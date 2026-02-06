@@ -1,6 +1,6 @@
 {
-  "name": "yemeni-backend",
-  "version": "1.0.0",
+  "name": "yemeni-backend-stable",
+  "version": "1.0.1",
   "description": "Yemeni Market Backend API",
   "main": "server.js",
   "scripts": {
